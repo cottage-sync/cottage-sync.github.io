@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cottage Sync</title>
+    <meta
+      name="description"
+      content="Own Your Secrets - Sync cottage encrypted secrets from any repo to any device"
+    />
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    <link rel="manifest" href="manifest.json" />
+    <link rel="icon" type="image/svg+xml" href="favicon.svg" />
+    <link rel="icon" type="image/png" sizes="96x96" href="favicon-96x96.png" />
+    <link rel="shortcut icon" href="favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
+    <meta name="theme-color" content="#0f172a" />
+
+    <!-- CSS -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/simpledotcss/simple.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn-uicons.flaticon.com/2.1.0/uicons-regular-rounded/css/uicons-regular-rounded.css"
+    />
+
+    <style>
+      #app {
+        width: min(100%, 960px);
+        margin: 0 auto;
+        padding: clamp(12px, 3vw, 28px);
+        box-sizing: border-box;
+      }
+      canvas {
+        display: none;
+      }
+      video {
+        width: 100%;
+        max-width: 400px;
+        border: 1px solid #ccc;
+      }
+      .hidden {
+        display: none;
+      }
+      li {
+        padding: 0 !important;
+      }
+      .repo-item {
+        cursor: pointer;
+        padding: 10px;
+        border: 1px solid var(--accent-bg);
+        border-radius: 5px;
+        margin-bottom: 5px;
+        transition: background 0.2s;
+        list-style: none;
+      }
+      .repo-item:hover {
+        background: var(--accent-bg);
+      }
+      nav.app-nav {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 24px;
+        padding: 8px;
+        border: 1px solid var(--accent-bg);
+        border-radius: 16px;
+        background: color-mix(in srgb, var(--accent-bg) 60%, transparent);
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+        backdrop-filter: blur(8px);
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .nav-tab {
+        margin: 0;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px 16px;
+        border-radius: 12px;
+        border: 1px solid transparent;
+        background: transparent;
+        color: var(--text);
+        font-weight: 600;
+        box-shadow: none;
+        transition: background 0.2s ease, border-color 0.2s ease,
+          transform 0.2s ease, color 0.2s ease;
+      }
+      .nav-tab:hover {
+        background: var(--bg);
+        border-color: var(--accent-bg);
+        transform: translateY(-1px);
+      }
+      .nav-tab.active {
+        background: var(--accent);
+        color: white;
+        border-color: var(--accent);
+        box-shadow: 0 10px 20px rgba(15, 23, 42, 0.16);
+      }
+      .nav-tab i {
+        display: inline-flex;
+        line-height: 1;
+      }
+      .copy-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 4px 8px;
+        margin: 0;
+        font-size: 0.8em;
+        line-height: 1;
+        cursor: pointer;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+        background: var(--accent-bg);
+        border: 1px solid transparent;
+        color: var(--text);
+        box-shadow: none;
+      }
+      .copy-button:hover {
+        background: var(--bg);
+        border-color: var(--accent-bg);
+        transform: translateY(-1px);
+      }
+      .copy-button:active {
+        transform: translateY(0);
+      }
+      .copy-button i {
+        font-size: 1.1em;
+      }
+      .auth-screen {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 80vh;
+        gap: 24px;
+        padding: clamp(12px, 4vw, 32px);
+        box-sizing: border-box;
+      }
+      .auth-title {
+        margin: 0;
+        font-size: clamp(2em, 8vw, 3.2em);
+        font-weight: 900;
+        letter-spacing: -0.04em;
+        text-align: center;
+        line-height: 1;
+      }
+      .auth-description {
+        margin: -8px 0 12px 0;
+        font-size: clamp(0.9em, 3vw, 1.15em);
+        font-weight: 500;
+        opacity: 0.7;
+        text-align: center;
+        max-width: 45ch;
+        line-height: 1.5;
+      }
+      .auth-card {
+        width: 100%;
+        max-width: 480px;
+        margin: 0;
+        padding: clamp(20px, 5vw, 40px);
+        background: var(--bg);
+        border: 1px solid var(--accent-bg);
+        border-radius: 28px;
+        box-shadow: 0 20px 60px rgba(15, 23, 42, 0.12);
+        box-sizing: border-box;
+      }
+      .auth-header {
+        text-align: center;
+        margin-bottom: 28px;
+      }
+      .auth-header i.main-icon {
+        font-size: 3em;
+        color: var(--accent);
+        margin-bottom: 20px;
+        display: inline-flex;
+      }
+      .auth-header h2 {
+        margin: 14px 0 0 0;
+        font-size: 1.85em;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+      }
+      .auth-header .eyebrow {
+        margin: 0;
+        font-size: 0.82rem;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        opacity: 0.6;
+        font-weight: 700;
+      }
+      .auth-body p {
+        text-align: center;
+        margin-bottom: 28px;
+        line-height: 1.6;
+        opacity: 0.88;
+        font-size: 0.95em;
+      }
+      .auth-form {
+        display: flex;
+        flex-direction: column;
+        gap: 22px;
+      }
+      .auth-input-group {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .auth-input-group label {
+        font-weight: 700;
+        font-size: 0.92em;
+        margin-left: 4px;
+      }
+      .auth-input-group input {
+        width: 100%;
+        box-sizing: border-box;
+      }
+      .public-key-badge {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: color-mix(in srgb, var(--accent-bg) 60%, transparent);
+        padding: 10px 14px;
+        border-radius: 14px;
+        margin-top: 18px;
+        border: 1px solid color-mix(in srgb, var(--accent) 15%, var(--accent-bg));
+        box-shadow: inset 0 1px 0 color-mix(in srgb, var(--bg) 88%, white 8%);
+        cursor: pointer;
+        transition: all 0.2s ease;
+        user-select: all;
+      }
+      .public-key-badge:hover {
+        background: color-mix(in srgb, var(--accent-bg) 80%, var(--accent));
+        border-color: var(--accent);
+      }
+      .public-key-badge:active {
+        transform: scale(0.98);
+      }
+      .public-key-badge__content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        overflow: hidden;
+      }
+      .public-key-badge__label {
+        font-size: 0.68rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        opacity: 0.55;
+        font-weight: 800;
+        text-align: left;
+      }
+      .public-key-badge code {
+        font-size: 0.78em;
+        word-break: break-all;
+        background: transparent;
+        padding: 0;
+        color: var(--accent);
+        font-weight: 600;
+        text-align: left;
+      }
+      .panel-summary {
+        list-style: none;
+        cursor: pointer;
+        font-weight: 600;
+      }
+      .panel-summary::-webkit-details-marker {
+        display: none;
+      }
+      .panel-summary::marker {
+        content: "";
+      }
+      .install-banner {
+        display: none;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        margin: 0 auto 18px auto;
+        padding: 14px 16px;
+        width: min(100%, 960px);
+        box-sizing: border-box;
+        border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--accent-bg));
+        border-radius: 16px;
+        background: color-mix(in srgb, var(--bg) 88%, var(--accent-bg) 12%);
+        color: var(--text);
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+      }
+      .install-banner__brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 12px;
+        border-radius: 14px;
+        background: color-mix(in srgb, var(--bg) 78%, var(--accent-bg) 22%);
+        border: 1px solid color-mix(in srgb, var(--accent) 14%, var(--accent-bg));
+        box-shadow: inset 0 1px 0 color-mix(in srgb, var(--bg) 88%, white 12%);
+      }
+      .install-banner__logo {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        object-fit: cover;
+        box-shadow: 0 6px 16px rgba(15, 23, 42, 0.14);
+      }
+      .install-banner__brand-text {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .install-banner__brand-name {
+        font-weight: 800;
+        line-height: 1.1;
+        color: var(--text);
+      }
+      .install-banner__brand-tag {
+        font-size: 0.78rem;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: color-mix(in srgb, var(--text) 72%, transparent);
+      }
+      .install-banner__content {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .install-banner__title {
+        font-weight: 700;
+        color: var(--text);
+      }
+      .install-banner__text {
+        font-size: 0.92rem;
+        color: color-mix(in srgb, var(--text) 88%, transparent);
+      }
+      .install-banner__hint {
+        font-size: 0.82rem;
+        color: color-mix(in srgb, var(--text) 74%, transparent);
+      }
+      .install-banner__actions {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .install-banner button {
+        margin: 0;
+      }
+      .install-banner__dismiss {
+        background: color-mix(in srgb, var(--bg) 82%, var(--accent-bg) 18%);
+        color: var(--text);
+        border: 1px solid var(--accent-bg);
+      }
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.55);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        z-index: 1000;
+      }
+      .modal-card {
+        width: min(100%, 480px);
+        background: var(--bg, #fff);
+        color: var(--text, inherit);
+        border: 1px solid var(--accent-bg);
+        border-radius: 10px;
+        box-shadow: 0 18px 48px rgba(15, 23, 42, 0.2);
+        padding: 20px;
+      }
+      .modal-body {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .modal-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 18px;
+      }
+      .destructive {
+        background: #c62828;
+        border-color: #c62828;
+      }
+      .destructive:hover {
+        background: #b71c1c;
+        border-color: #b71c1c;
+      }
+      .legal-page {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+      .legal-page__header {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: flex-start;
+        padding: 20px;
+        border: 1px solid var(--accent-bg);
+        border-radius: 18px;
+        background: color-mix(in srgb, var(--accent-bg) 58%, transparent);
+      }
+      .legal-page__eyebrow {
+        margin: 0 0 6px 0;
+        font-size: 0.78rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        opacity: 0.72;
+      }
+      .legal-page__header h2 {
+        margin: 0;
+      }
+      .legal-page__summary {
+        margin: 8px 0 0 0;
+        max-width: 65ch;
+        opacity: 0.88;
+      }
+      .legal-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      .legal-nav__button,
+      .footer-link {
+        margin: 0;
+        border-radius: 999px;
+        border: 1px solid var(--accent-bg);
+        background: transparent;
+        color: var(--text);
+        box-shadow: none;
+      }
+      .legal-nav__button.active,
+      .footer-link:hover,
+      .site-footer__repo:hover {
+        background: var(--accent-bg);
+      }
+      .legal-page__content {
+        display: grid;
+        gap: 14px;
+      }
+      .legal-card {
+        padding: 18px;
+        border: 1px solid var(--accent-bg);
+        border-radius: 16px;
+        background: color-mix(in srgb, var(--bg) 88%, var(--accent-bg) 12%);
+      }
+      .legal-card h3 {
+        margin-top: 0;
+      }
+      .site-footer {
+        margin-top: 28px;
+        padding: 18px 20px;
+        border-top: 1px solid var(--accent-bg);
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .site-footer__header {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: flex-start;
+      }
+      .site-footer__header p,
+      .site-footer__note {
+        margin: 6px 0 0 0;
+        opacity: 0.78;
+      }
+      .site-footer__repo {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 14px;
+        border: 1px solid var(--accent-bg);
+        border-radius: 999px;
+        text-decoration: none;
+        white-space: nowrap;
+      }
+      .site-footer__links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      @media (max-width: 640px) {
+        #app {
+          padding: 8px;
+        }
+        .mobile-hide {
+          display: none !important;
+        }
+        nav.app-nav {
+          gap: 8px;
+          padding: 6px;
+          border-radius: 14px;
+        }
+        .nav-tab {
+          flex: 1 1 160px;
+          width: 100%;
+        }
+        .install-banner {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .install-banner__actions {
+          width: 100%;
+        }
+        .install-banner__actions button {
+          flex: 1 1 160px;
+        }
+        .legal-page__header,
+        .site-footer__header {
+          flex-direction: column;
+        }
+        .site-footer__repo {
+          white-space: normal;
+        }
+      }
+    </style>
+
+    <!-- Filesystem -->
+    <script src="https://unpkg.com/@isomorphic-git/lightning-fs@4.6.2"></script>
+  <link rel="modulepreload" href="/cottage-sync-d7690073269509e9.js" crossorigin="anonymous" integrity="sha384-LMJg15TfwqMjL7BEQ1z9Qwpc8hNwZlzQYheUqwiOU/9OUpEXk2EnMH8LrSKORYkF"><link rel="preload" href="/cottage-sync-d7690073269509e9_bg.wasm" crossorigin="anonymous" integrity="sha384-UJATn4xW/Ib3JGWhjufZT1qUVZrxi0tCItR6YPhbu00xuTB/YU3hNMiE03Ccuuce" as="fetch" type="application/wasm"></head>
+  <body>
+    <div
+      id="install-banner"
+      class="install-banner"
+      role="status"
+      aria-live="polite"
+    >
+      <div class="install-banner__content">
+        <div class="install-banner__brand">
+          <img
+            class="install-banner__logo"
+            src="web-app-manifest-192x192.png"
+            alt="Cottage Sync logo"
+            width="40"
+            height="40"
+          />
+          <div class="install-banner__brand-text">
+            <span class="install-banner__brand-name">Cottage Sync</span>
+            <span class="install-banner__brand-tag">Progressive Web App</span>
+          </div>
+        </div>
+        <span class="install-banner__title">Install Cottage Sync</span>
+        <span id="install-banner-text" class="install-banner__text">
+          Own Your Secrets - Sync cottage encrypted secrets from any repo to any
+          device
+        </span>
+        <span id="install-banner-hint" class="install-banner__hint"></span>
+      </div>
+      <div class="install-banner__actions">
+        <button id="install-app-button" type="button">Install App</button>
+        <button
+          id="dismiss-install-button"
+          type="button"
+          class="secondary install-banner__dismiss"
+        >
+          Dismiss
+        </button>
+      </div>
+    </div>
+    <div id="app"></div>
+    <script>
+      const installBanner = document.getElementById("install-banner");
+      const installBannerText = document.getElementById("install-banner-text");
+      const installBannerHint = document.getElementById("install-banner-hint");
+      const installAppButton = document.getElementById("install-app-button");
+      const dismissInstallButton = document.getElementById(
+        "dismiss-install-button"
+      );
+      let deferredInstallPrompt = null;
+      let fallbackBannerTimer = null;
+
+      const isStandalone = () =>
+        window.matchMedia("(display-mode: standalone)").matches ||
+        window.navigator.standalone === true;
+
+      const isIos = () => /iphone|ipad|ipod/i.test(window.navigator.userAgent);
+      const isSafari = () => {
+        const ua = window.navigator.userAgent;
+        return /safari/i.test(ua) && !/chrome|chromium|crios|edg|opr/i.test(ua);
+      };
+
+      const getInstallHelp = () => {
+        if (isIos() && isSafari()) {
+          return {
+            text: "Own Your Secrets - Sync cottage encrypted secrets from any repo to any device",
+            hint: "Tap Share, then choose Add to Home Screen.",
+            buttonLabel: "Show Steps",
+            oneClick: false,
+          };
+        }
+
+        return {
+          text: "Own Your Secrets - Sync cottage encrypted secrets from any repo to any device",
+          hint: "If the install prompt does not appear, use your browser menu and choose Install App / Add to desktop / Add to Home Screen.",
+          buttonLabel: "Show Steps",
+          oneClick: false,
+        };
+      };
+
+      const showInstallBanner = ({ oneClick, text, hint, buttonLabel }) => {
+        if (!installBanner || isStandalone()) {
+          return;
+        }
+        installBanner.style.display = "flex";
+        if (installBannerText) {
+          installBannerText.textContent = text;
+        }
+        if (installBannerHint) {
+          installBannerHint.textContent = hint || "";
+        }
+        if (installAppButton) {
+          installAppButton.disabled = !oneClick;
+          installAppButton.textContent = buttonLabel;
+        }
+      };
+
+      const hideInstallBanner = () => {
+        if (installBanner) {
+          installBanner.style.display = "none";
+        }
+      };
+
+      const scheduleFallbackInstallBanner = () => {
+        if (fallbackBannerTimer || isStandalone()) {
+          return;
+        }
+
+        fallbackBannerTimer = window.setTimeout(() => {
+          if (deferredInstallPrompt || isStandalone()) {
+            return;
+          }
+          showInstallBanner(getInstallHelp());
+        }, 1800);
+      };
+
+      window.addEventListener("beforeinstallprompt", (event) => {
+        event.preventDefault();
+        deferredInstallPrompt = event;
+        if (fallbackBannerTimer) {
+          window.clearTimeout(fallbackBannerTimer);
+          fallbackBannerTimer = null;
+        }
+        showInstallBanner({
+          oneClick: true,
+          text: "Own Your Secrets - Sync cottage encrypted secrets from any repo to any device",
+          hint: "One click opens the browser install prompt.",
+          buttonLabel: "Install App",
+        });
+      });
+
+      window.addEventListener("appinstalled", () => {
+        deferredInstallPrompt = null;
+        hideInstallBanner();
+      });
+
+      installAppButton?.addEventListener("click", async () => {
+        if (!deferredInstallPrompt) {
+          showInstallBanner(getInstallHelp());
+          return;
+        }
+
+        deferredInstallPrompt.prompt();
+        const choice = await deferredInstallPrompt.userChoice;
+        if (choice?.outcome !== "accepted") {
+          showInstallBanner({
+            oneClick: true,
+            text: "Own Your Secrets - Sync cottage encrypted secrets from any repo to any device",
+            hint: "You can try again whenever you're ready.",
+            buttonLabel: "Install App",
+          });
+        }
+        deferredInstallPrompt = null;
+      });
+
+      dismissInstallButton?.addEventListener("click", hideInstallBanner);
+
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker
+            .register("./sw.js")
+            .finally(scheduleFallbackInstallBanner);
+        });
+      } else {
+        scheduleFallbackInstallBanner();
+      }
+
+      // Initialize lightning-fs
+      window.fs = new LightningFS("fs");
+      window.pfs = window.fs.promises;
+    </script>
+  
+<script type="module">
+import init, * as bindings from '/cottage-sync-d7690073269509e9.js';
+const wasm = await init({ module_or_path: '/cottage-sync-d7690073269509e9_bg.wasm' });
+
+
+window.wasmBindings = bindings;
+
+
+dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
+
+</script></body>
+</html>
